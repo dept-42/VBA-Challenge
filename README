@@ -1,0 +1,19 @@
+I used microsoft VSB information pages.
+I also used this posting for strategy to loop through all workshgeets in 
+a workbook: https://www.statology.org/vba-loop-through-worksheets/
+Sub LoopSheets()
+
+Dim ws As Worksheet
+
+For Each ws In ThisWorkbook.Worksheets
+
+    ws.Range("A1").Value = 100
+
+Next ws
+
+End Sub
+
+I also encountered a known bug effecting VSB on Mac (as evidenced by many web references)
+I tried to set the variable <quarterlyCloseingPrice> to the value of 
+<previousCloseingPrice> -- this was simply for readability and was not needed, so i left thjis out. 
+The known bug is assigning one double to another doubl which sometime throws an exception.
