@@ -1,0 +1,237 @@
+Sub quarterlyStats()
+    Dim ws As Worksheet
+    Dim q As Integer
+    q = 0
+    For Each ws In Worksheets
+        'Declare variables
+        Dim worksheetName As String
+        q = q + 1
+        worksheetName = "Q" & q
+        'MsgBox worksheetName
+        Set ws = Sheets(worksheetName)
+        Dim lastFilledRow As Long
+        Dim outputRow As Long
+    
+        Dim ticker As String
+        Dim thisTicker As String
+        Dim quarterlyOpeningPrice As Double
+        Dim quarterlyCloseingPrice As Double
+        Dim lastCloseingPrice As Double
+           
+        Dim thisVolume As LongLong
+        Dim thisCloseingPrice As Double
+        Dim previousCloseingPrice As Double
+     
+        Dim quarterlyChange As Double
+        Dim percentChange As Double
+        Dim totalStockVolume As LongLong
+    
+        Dim greatestPricePercentIncrease As Double
+        Dim greatestPricePercentDecrease As Double
+        Dim greatestTotalVolume As LongLong
+        Dim greatestPricePercentIncreaseTicker As String
+        Dim greatestPricePercentDecreaseTicker As String
+        Dim greatestTotalVolumeTicker As String
+    
+        ' New header and table labels
+        ws.Range("I1") = "Ticker"
+        ws.Range("J1") = "QuarterlyChange"
+        ws.Range("K1") = "PercentChange"
+        ws.Range("L1") = "Total Stock Volume"
+        ws.Range("O2") = "Greatest % Increase"
+        ws.Range("O3") = "Greatest % Decrease"
+        ws.Range("O4") = "Greatest Total Volume"
+        ws.Range("P1") = "Ticker"
+        ws.Range("Q1") = "Value"
+        
+        'set current worksheetName
+        'worksheetName = "Q" & q
+        'MsgBox worksheetName
+    
+        ' get value for <lastFilledRow>
+        lastFilledRow = ws.Range("A" & Rows.Count).End(xlUp).Row
+    
+        'get intial value of <ticker>
+        ticker = ws.Cells(2, 1).Value
+    
+        ' get initial value of <quarterlyOpeningPrice>
+        quarterlyOpeningPrice = ws.Cells(2, 3).Value
+    
+        'initialize <quarterlyCloseingPrice>
+        quarterlyCloseingPrice = 100000
+    
+        'Initialize <lastCloseingPrice>
+        lastCloseingPrice = 0
+    
+        ' initialize <totalStockVolume>
+        totalStockVolume = 0
+    
+        ' set initial value of <outputRow>
+        outputRow = 2
+    
+        'set intial value of <greatestPricePercentIncrease>  <greatestPricePercentDecrease> to  0
+        greatestPricePercentIncrease = 0
+        greatestPricePercentDecrease = 0
+    
+        'set intial value of <greatestTotalVolume> to 0
+        greatestTotalVolume = 0
+    
+        ' set initial value of greatestPricePercentIncreaseTicker
+        greatestPricePercentIncreaseTicker = ""
+    
+        ' set initial value of greatestPricePercentDecreaseTicker
+        greatestPricePercentDecreaseTicker = ""
+    
+        ' set initial value of greatestTotalVolumeTicker
+        greatestTotalVolumeTicker = ""
+    
+        ' loop through rows chunking by <ticker>
+        For I = 2 To lastFilledRow:
+
+             ' store value of previous ticker
+            'previousTicker = thisTicker
+        
+            ' get row values
+            thisTicker = ws.Cells(I, 1).Value
+            thisVolume = ws.Cells(I, 7).Value
+        
+            'store previouscloseing price and update <thisCloseingPrice>
+            previousCloseingPrice = thisCloseingPrice
+            thisCloseingPrice = ws.Cells(I, 6).Value
+
+            ' Calculate stats for last ticker data set
+            If I = lastFilledRow Then
+         
+                ' update total stock volume
+                totalStockVolume = totalStockVolume + ws.Cells(I, 7).Value
+            
+                ' populate 'ticker column
+                ws.Cells(outputRow, 9) = ticker
+            
+                'get closeingPrice
+                lastCloseingPrice = ws.Cells(I, 6).Value
+
+                ' calculate quarterly change and populate quarterly change column
+                quarterlyChange = (lastCloseingPrice - quarterlyOpeningPrice)
+                ws.Cells(outputRow, 10) = quarterlyChange
+            
+                'calculate percent change and populate percent change column
+                percentChange = Round(((quarterlyChange / quarterlyOpeningPrice) * 100), 2)
+                ws.Cells(outputRow, 11) = percentChange
+            
+                'set background color of percent change cell, red if negative, green if positive, white if no change
+                If percentChange < 0 Then
+                    ws.Cells(outputRow, 11).Interior.Color = RGB(255, 0, 0)
+                ElseIf percentChange > 0 Then
+                    ws.Cells(outputRow, 11).Interior.Color = RGB(0, 255, 0)
+                Else
+                    ' leave white
+                End If
+            
+                'populate totalVolume column
+                ws.Cells(outputRow, 12) = totalStockVolume
+            
+                'update greatestTotalVolume and greatestTotalVolumeTicker
+                If totalStockVolume > greatestTotalVolume Then
+                    greatestTotalVolume = totalStockVolume
+                    greatestTotalVolumeTicker = thisTicker
+                End If
+            
+                'update greatestPercentIncrease/Decrease and greatestPercentIncrease/DecreaseTicker
+                If percentChange > greatestPercentIncrease Then
+                    greatestPricePercentIncrease = percentChange
+                    greatestPricePercentIncreaseTicker = thisTicker
+                ElseIf percentChange < greatestPricePercentDecrease Then
+                    greatestPricePercentDecrease = percentChange
+                    greatestPricePercentDecreaseTicker = thisTicker
+                End If
+            
+            ElseIf thisTicker = ticker Then
+            
+                'increase <totalStockVolume
+                
+                totalStockVolume = totalStockVolume + ws.Cells(I, 7).Value
+              
+            'when <ticker> changes calculate stats
+            ElseIf thisTicker <> ticker Then
+        
+                ' NOTE, KNOWN bug: set <quarterlyCloseingPrice>
+                'thisspawned an overflow error, documented by other VBAusers on Mac
+                'Since <quarterlyCloseingPrice> assignement is not strictly needed and is
+                ' there for readability, I have used <previousCloseingPrice>instead
+                ' although not as readable
+                'quarterlyCloseingPrice = previousCloseingPrice
+             
+            
+                'populate 'ticker column
+                ws.Cells(outputRow, 9) = ticker
+            
+                'calculate quarterly change and populate quarterly change column
+                quarterlyChange = (previousCloseingPrice - quarterlyOpeningPrice)
+                Cells(outputRow, 10) = quarterlyChange
+            
+                'calculate percent change and populate percent change column
+                percentChange = Round(((quarterlyChange / quarterlyOpeningPrice) * 100), 2)
+                ws.Cells(outputRow, 11) = percentChange
+            
+                'set background color of percent change cell, red if negative, green if positive, white if no change
+                If percentChange < 0 Then
+                    ws.Cells(outputRow, 11).Interior.Color = RGB(255, 0, 0)
+                ElseIf percentChange > 0 Then
+                    ws.Cells(outputRow, 11).Interior.Color = RGB(0, 255, 0)
+                Else
+                    'leave white
+                End If
+            
+                'populate totalVolume column
+                ws.Cells(outputRow, 12) = totalStockVolume
+            
+                'update greatestTotalVolume  ' update greatestTotalVolume and greatestTotalVolumeTicker
+                If totalStockVolume > greatestTotalVolume Then
+                    greatestTotalVolume = totalStockVolume
+                    greatestTotalVolumeTicker = ticker
+                End If
+            
+                'update greatestPercentIncrease/Decrease and greatestPercentIncrease/DecreaseTicker
+                'MsgBox ("greatestPricePercentIncrease " & greatestPricePercentIncrease & " percentChange " & percentChange)
+                If percentChange > greatestPricePercentIncrease Then
+                    greatestPricePercentIncrease = percentChange
+                    greatestPricePercentIncreaseTicker = ticker
+                ElseIf percentChange < greatestPricePercentDecrease Then
+                    greatestPricePercentDecrease = percentChange
+                    greatestPricePercentDecreaseTicker = ticker
+                End If
+            
+                'increment <outputRow>
+                outputRow = outputRow + 1
+            
+                'reset <quarterlyOpeningPrice>
+                quarterlyOpeningPrice = ws.Cells(I, 3).Value
+            
+                'reset <totalStockVolume>
+                totalStockVolume = ws.Cells(I, 7).Value
+            
+                'reset <ticker> for next chunk
+                ticker = thisTicker
+            
+                'reset <totalStockVolume> for next chunk
+                totalStockVolume = ws.Cells(I, 7).Value
+            
+            End If
+        Next I
+    
+        ' populate summary table
+        ws.Cells(2, 17) = greatestPricePercentIncrease
+        ws.Cells(2, 16) = greatestPricePercentIncreaseTicker
+    
+        ws.Cells(3, 17) = greatestPricePercentDecrease
+        ws.Cells(3, 16) = greatestPricePercentDecreaseTicker
+    
+        ws.Cells(4, 17) = greatestTotalVolume
+        ws.Cells(4, 16) = greatestTotalVolumeTicker
+    
+        'format
+       Worksheets(worksheetName).Range("A:Q").Columns.AutoFit
+        'ws.Activate
+    Next
+End Sub
